@@ -15,25 +15,26 @@ void MainWindow::paintEvent(QPaintEvent *event)
     Q_UNUSED(event)
 
     QPainter painter{this};
-
-    QPointF center{100, 100};
-    painter.setPen( QPen(Qt::red, 3) );
-    painter.drawPoint(center);
-
-    // -------------
-
     painter.setPen( QPen(Qt::black, 2) );
 
-    double pointCount = 16;
-    double radius = 50;
+    double X1 = -50; //Точка начала дуги (текущая позиция)
+    double Y1 = 0;
+    double X2 = 0;   //Точка конца дуги (заданная позиция)
+    double Y2 = -50;
+    double I2 = 0;   //Центр дуги
+    double J2 = 0;
 
-    for( int i{0}; i < pointCount ; ++i) {
+    double angle1 = qAtan2 ( X1 - I2, Y1 - J2 ); //угол начала
+    double angle2 = qAtan2 ( X2 - I2, Y2 - J2 ); //угол окончания
+    double radius = qSqrt( qPow(X1 - I2,2) + qPow(Y1 - J2,2) ); //радиус дуги
 
-        qreal angle = qDegreesToRadians(180.0*i/pointCount);
+    double delta_angle =  (M_PI*4)/radius; //угол, на который надо шагать при апроксимации отрезками (чем меньше радиус, тем меньше точек в окружности)
 
-        qreal x = center.x() + radius * sin(angle);
-        qreal y = center.y() + radius * cos(angle);
+    //Работает только от меньшего угла к большему
+    for( double CurAngle = angle1; CurAngle < angle2; CurAngle += delta_angle){
+        qreal x = I2 + radius * qSin(CurAngle);
+        qreal y = J2 + radius * qCos(CurAngle);
 
-        painter.drawPoint(QPointF(x, y));
+        painter.drawPoint(QPointF(300+x, 300-y)); //На экране Y координата перевернута
     }
 }
