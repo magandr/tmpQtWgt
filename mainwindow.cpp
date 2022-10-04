@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include <QMatrix4x4>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -15,26 +16,36 @@ void MainWindow::paintEvent(QPaintEvent *event)
     Q_UNUSED(event)
 
     QPainter painter{this};
+    QPointF  point;
     painter.setPen( QPen(Qt::black, 2) );
 
-    double X1 = -50; //Точка начала дуги (текущая позиция)
-    double Y1 = 0;
-    double X2 = 0;   //Точка конца дуги (заданная позиция)
-    double Y2 = -50;
-    double I2 = 0;   //Центр дуги
-    double J2 = 0;
+    QVector3D P1(-5,0,0);
+    QVector3D P2(-2,-5,0);
+    QVector3D PC(0,0,0);
 
-    double angle1 = qAtan2 ( X1 - I2, Y1 - J2 ); //угол начала
-    double angle2 = qAtan2 ( X2 - I2, Y2 - J2 ); //угол окончания
-    double radius = qSqrt( qPow(X1 - I2,2) + qPow(Y1 - J2,2) ); //радиус дуги
+    QVector3D V1 = P1-PC;
+    QVector3D V2 = P2-PC;
 
-    double delta_angle =  (M_PI*4)/radius; //угол, на который надо шагать при апроксимации отрезками (чем меньше радиус, тем меньше точек в окружности)
+    V1.normalize();
+    V2.normalize();
 
-    //Работает только от меньшего угла к большему
-    for( double CurAngle = angle1; CurAngle < angle2; CurAngle += delta_angle){
-        qreal x = I2 + radius * qSin(CurAngle);
-        qreal y = J2 + radius * qCos(CurAngle);
+    float common_angle = qRadiansToDegrees( qAcos( QVector3D::dotProduct(V1,V2) ) );
+    float step_angle = 5;
+    int angle_steps = common_angle/step_angle;
 
-        painter.drawPoint(QPointF(300+x, 300-y)); //На экране Y координата перевернута
+    QMatrix4x4 m;
+    m.rotate(step_angle, 0.0, 0.0, 1.0);
+
+    QVector3D P = P1;
+    for(int step = 0; step < angle_steps; step ++){
+        P -= PC;
+        P = (P.toVector4D() * m).toVector3D();
+        P += PC;
+
+        point = P.toPointF();
+        point.setX(point.x()*10 + 300);
+        point.setY(300-point.y()*10);
+        painter.drawPoint(point); //На экране Y координата перевернута
     }
+
 }
